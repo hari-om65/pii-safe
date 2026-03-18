@@ -1,0 +1,43 @@
+rules:
+
+  - name: analysis_pseudonymize_identifiers
+    operations: [analysis, investigate, classify]
+    entities: [email, username, ip_address]
+    decision: pseudonymize
+    reason: "Preserve analytical context with consistent placeholders."
+
+  - name: analysis_redact_sensitive_financial
+    operations: [analysis, investigate, classify]
+    entities: [credit_card, ssn]
+    decision: redact
+    reason: "Financial identifiers must be fully redacted during analysis."
+
+  - name: analysis_redact_api_keys
+    operations: [analysis, investigate, classify]
+    entities: [api_key]
+    decision: redact
+    reason: "API keys must always be redacted."
+
+  - name: export_redact_all
+    operations: [export, share, send, publish]
+    entities: [email, ip_address, phone, credit_card, ssn, username, api_key]
+    decision: redact
+    reason: "All PII must be redacted before leaving system boundary."
+
+  - name: store_pseudonymize_contact_info
+    operations: [store, log, archive]
+    entities: [email, phone, username, ip_address]
+    decision: pseudonymize
+    reason: "Stored data uses pseudonymization for future re-identification."
+
+  - name: store_redact_financial
+    operations: [store, log, archive]
+    entities: [credit_card, ssn, api_key]
+    decision: redact
+    reason: "Financial data must never be stored in identifiable form."
+
+  - name: default_block_unknown_operations
+    operations: []
+    entities: []
+    decision: block
+    reason: "Unknown operation with PII detected. Blocking by default."

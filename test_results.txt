@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.0.2, pluggy-1.6.0 -- /home/zeus/miniconda3/envs/cloudspace/bin/python
+cachedir: .pytest_cache
+rootdir: /teamspace/studios/this_studio/pii-safe
+plugins: anyio-4.12.1
+collecting ... collected 18 items
+
+tests/test_core.py::TestDetector::test_detects_email PASSED              [  5%]
+tests/test_core.py::TestDetector::test_detects_ip_address PASSED         [ 11%]
+tests/test_core.py::TestDetector::test_detects_phone PASSED              [ 16%]
+tests/test_core.py::TestDetector::test_detects_ssn PASSED                [ 22%]
+tests/test_core.py::TestDetector::test_detects_credit_card PASSED        [ 27%]
+tests/test_core.py::TestDetector::test_no_false_positives PASSED         [ 33%]
+tests/test_core.py::TestDetector::test_risk_score_increases_with_more_pii PASSED [ 38%]
+tests/test_core.py::TestPseudonymize::test_same_value_same_scope_same_token PASSED [ 44%]
+tests/test_core.py::TestPseudonymize::test_different_scope_different_token PASSED [ 50%]
+tests/test_core.py::TestPseudonymize::test_token_has_correct_prefix PASSED [ 55%]
+tests/test_core.py::TestPolicyEngine::test_analysis_pseudonymizes_email PASSED [ 61%]
+tests/test_core.py::TestPolicyEngine::test_export_redacts_all PASSED     [ 66%]
+tests/test_core.py::TestPolicyEngine::test_analysis_redacts_ssn PASSED   [ 72%]
+tests/test_core.py::TestPolicyEngine::test_unknown_operation_blocks PASSED [ 77%]
+tests/test_core.py::TestSanitizer::test_redaction_replaces_pii PASSED    [ 83%]
+tests/test_core.py::TestSanitizer::test_pseudonymization_consistent PASSED [ 88%]
+tests/test_core.py::TestSanitizer::test_block_returns_blocked_message PASSED [ 94%]
+tests/test_core.py::TestSanitizer::test_allow_returns_original PASSED    [100%]
+
+============================== 18 passed in 0.07s ==============================
