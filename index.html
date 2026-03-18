@@ -391,7 +391,7 @@ function renderMain(det,inj,pol,san,comp,reid,summary,scope){
       var ms=det.matches.filter(function(m){return m.type===t;});
       var rule=PR.filter(function(r){return r.entities.indexOf(t)>=0&&r.ops.indexOf(pol.rule.split("_")[0]>=0||true);});
       var ruleNum=rule.length>0?rule[0].rule:"#A-01";
-      html+="<div class=\"entity-row\"><span class=\"tag "+tgcl(t)+"\">"+t+"</span><div class=\"entity-detail\">"+ms.length+" match"+(ms.length>1?"es":"")+" &middot; conf "+(PATTERNS[t].conf*100).toFixed(0)+"%<div class=\"entity-rule\">rule "+ruleNum+" &rarr; "+pol.decision+"</div></div><span class=\"tag "+(pol.decision==="redact"?"t-re":"pol.decision==="pseudonymize"?"t-ps":"t-al")+"\">"+pol.decision+"</span></div>";
+      html+="<div class=\"entity-row\"><span class=\"tag "+tgcl(t)+"\">"+t+"</span><div class=\"entity-detail\">"+ms.length+" match"+(ms.length>1?"es":"")+" &middot; conf "+(PATTERNS[t].conf*100).toFixed(0)+"%<div class=\"entity-rule\">rule "+ruleNum+" &rarr; "+pol.decision+"</div></div><span class=\"tag "+(pol.decision==="redact"?"t-re":pol.decision==="pseudonymize"?"t-ps":"t-al")+"\">"+pol.decision+"</span></div>";
     });
   }else{html+="<div class=\"empty\">No PII detected &mdash; clean text &#10003;</div>";}
   html+="</div></div>";
