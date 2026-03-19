@@ -2,7 +2,7 @@ rules:
 
   - name: analysis_pseudonymize_identifiers
     operations: [analysis, investigate, classify]
-    entities: [email, username, ip_address]
+    entities: [email, username, ip_address, phone]
     decision: pseudonymize
     reason: "Preserve analytical context with consistent placeholders."
 
