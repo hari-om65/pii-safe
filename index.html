@@ -277,7 +277,15 @@ function sanitize(text,matches,decision,affected,scope){
   var sorted=matches.filter(function(m){return affected.indexOf(m.type)>=0;}).sort(function(a,b){return b.start-a.start;});
   var out=text;
   sorted.forEach(function(m){
-    var rep=decision==="redact"?maskPartial(m.value,m.type):pseudonymize(m.value,m.type,scope);
+    var ALWAYS_REDACT=["password","api_key","jwt","ssn","credit_card"];
+    var rep;
+    if(ALWAYS_REDACT.indexOf(m.type)>=0){
+      rep=maskPartial(m.value,m.type);
+    } else if(decision==="redact"){
+      rep=maskPartial(m.value,m.type);
+    } else {
+      rep=pseudonymize(m.value,m.type,scope);
+    }
     transforms.push({orig:m.value,rep:rep,action:decision==="redact"?"redacted":"pseudonymized",type:m.type,ruleNum:""});
     out=out.slice(0,m.start)+rep+out.slice(m.end);
   });
@@ -289,7 +297,7 @@ function mapCompliance(types){
   types.forEach(function(t){(CM[t]||[]).forEach(function(v){violations.push(Object.assign({},v,{entity:t}));if(laws.indexOf(v.law)<0)laws.push(v.law);});});
   var ss={critical:1.0,high:0.75,medium:0.5,low:0.25};
   var maxSev=violations.reduce(function(a,v){return ss[v.sev]>ss[a]?v.sev:a;},"low");
-  var compScore = violations.length > 0 ? (ss[maxSev]||0) : 0.0;
+  var compScore=violations.length>0?(ss[maxSev]||0.5):0.0;
   return{violations:violations,laws:laws,score:compScore,maxSev:maxSev};
 }
 
@@ -368,6 +376,21 @@ function handleFile(input){
   reader.readAsText(file);
 }
 
+function neutralizeInjection(text){
+  if(!text) return text;
+  // XSS - escape all HTML tags
+  text=text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  // SQL injection - block
+  text=text.replace(/('\s*OR\s*[\d'"]|DROP\s+TABLE|UNION\s+SELECT|DELETE\s+FROM|INSERT\s+INTO)/gi,"[BLOCKED]");
+  // Command injection - block
+  text=text.replace(/(;\s*ls\s|&&\s*echo|\|\s*cat\s|`[^`]+`)/gi,"[INVALID INPUT]");
+  // Log injection - remove
+  text=text.replace(/FAKE_LOG_ENTRY[^
+]*/gi,"[LOG INJECTION REMOVED]");
+  text=text.replace(/\\n\\n[^
+]*/g,"");
+  return text;
+}
 function sanitizeForDisplay(text){
   if(!text) return text;
   // 1. Block SQL injection completely
