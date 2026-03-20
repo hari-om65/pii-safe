@@ -272,7 +272,8 @@ function sanitize(text,matches,decision,affected,scope){
   var transforms=[];
   if(decision==="block")return{text:"[BLOCKED: Policy denied this operation]",transforms:transforms};
   if(decision==="allow")return{text:text,transforms:transforms};
-  var sorted=matches.filter(function(m){return affected.indexOf(m.type)>=0;}).sort(function(a,b){return b.start-a.start;});
+  var FORCE_TYPES=["ssn","credit_card","api_key","jwt","password","ip_address","ipv6"];
+  var sorted=matches.filter(function(m){return affected.indexOf(m.type)>=0||FORCE_TYPES.indexOf(m.type)>=0;}).sort(function(a,b){return b.start-a.start;});
   var out=text;
   sorted.forEach(function(m){
     var rep;
