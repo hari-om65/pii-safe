@@ -274,8 +274,9 @@ function sanitize(text,matches,decision,affected,scope){
   var out=text;
   sorted.forEach(function(m){
     var rep;
-    if(ALWAYS_REDACT.indexOf(m.type)>=0){
-      rep=maskPartial(m.value,m.type);
+    var FORCE=["ssn","credit_card","api_key","jwt","password"];
+    if(FORCE.indexOf(m.type)>=0){
+      rep="["+m.type.toUpperCase().replace("_","-")+"-REDACTED]";
     } else if(decision==="redact"){
       rep=maskPartial(m.value,m.type);
     } else {
