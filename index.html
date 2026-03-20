@@ -201,7 +201,7 @@ var PATTERNS={
   jwt:{re:/\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\b/g,conf:0.95,w:0.9}
 ,
   password:{re:/(?:password|passwd|pwd)\s*[:=]\s*\S{4,}/gi,conf:0.90,w:0.9},
-  aadhaar:{re:/\b[2-9]{1}[0-9]{3}\s*-?\s*[0-9]{4}\s*-?\s*[0-9]{4}\b/g,conf:0.95,w:1.0},
+  aadhaar:{re:/\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b/g,conf:0.90,w:1.0},
   ipv6:{re:/\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b|\b(?:[0-9a-fA-F]{1,4}:){1,7}:|\b(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}\b/g,conf:0.90,w:0.5}
 }
 var RW={ssn:1.0,credit_card:1.0,api_key:0.9,email:0.7,phone:0.7,ip_address:0.5,username:0.4,jwt:0.9};
