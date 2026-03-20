@@ -385,13 +385,13 @@ function handleFile(input){
 function sanitizeJSON(obj, scope, depth) {
   if(depth > 5) return obj;
   if(typeof obj === 'string') {
-    // Step 1: Run injection neutralization on the value
-    var cleaned = neutralizeInjection(obj);
-    // Step 2: Check for injection attacks
-    var inj = scanInj(cleaned);
+    // Step 1: Check for injection attacks FIRST on raw value
+    var inj = scanInj(obj);
     if(inj.detected && inj.score >= 0.5) {
       return "[BLOCKED: " + inj.findings[0].name + "]";
     }
+    // Step 2: Run injection neutralization
+    var cleaned = neutralizeInjection(obj);
     // Step 3: Detect and sanitize PII
     var d = detectPII(cleaned);
     if(d.matches.length === 0) return cleaned;
