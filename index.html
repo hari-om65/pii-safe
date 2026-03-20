@@ -495,12 +495,12 @@ function renderMain(det,inj,pol,san,comp,reid,summary,scope){
     var actx=document.getElementById("actionChart");
     if(rctx&&actx){
       var riskData={labels:det.types.length>0?det.types:["no PII"],datasets:[{data:det.types.length>0?det.types.map(function(t){return Math.round((RW[t]||0.3)*100);}): [0],backgroundColor:det.types.map(function(t){return bc(RW[t]||0.3)+"88";}),borderColor:det.types.map(function(t){return bc(RW[t]||0.3);}),borderWidth:1}]};
-      if(riskChart)riskChart.destroy();
+      if(riskChart&&typeof riskChart.destroy==="function")riskChart.destroy();
       riskChart=new Chart(rctx,{type:"bar",data:riskData,options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{color:"#4a6080",font:{size:9}},grid:{color:"rgba(99,179,237,0.05)"}},x:{ticks:{color:"#4a6080",font:{size:9}},grid:{display:false}}}}});
       var red=san.transforms.filter(function(t){return t.action==="redacted";}).length;
       var pse=san.transforms.filter(function(t){return t.action==="pseudonymized";}).length;
       var clean=det.matches.length===0?1:0;
-      if(actionChart)actionChart.destroy();
+      if(actionChart&&typeof actionChart.destroy==="function")actionChart.destroy();
       actionChart=new Chart(actx,{type:"doughnut",data:{labels:["Redacted","Pseudonymized","Clean"],datasets:[{data:[red,pse,clean],backgroundColor:["rgba(252,129,129,0.7)","rgba(246,173,85,0.7)","rgba(104,211,145,0.7)"],borderColor:["#fc8181","#f6ad55","#68d391"],borderWidth:1}]},options:{responsive:true,plugins:{legend:{position:"bottom",labels:{color:"#8fa8c8",font:{size:9},boxWidth:10}}}}});
     }
   },100);
