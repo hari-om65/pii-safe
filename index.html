@@ -387,6 +387,16 @@ function runAnalysis(){
     btn.disabled=false;
   },300);
 }
+function highlightOutput(text,transforms){
+  if(!transforms||!transforms.length) return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  var safe=text.replace(/&/g,"&amp;");
+  transforms.forEach(function(t){
+    var escaped=t.rep.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var cls=t.action==="redacted"?"redacted-span":"pseudo-span";
+    safe=safe.replace(new RegExp(escaped,"g"),'<span class="'+cls+'">'+t.rep+'</span>');
+  });
+  return safe;
+}
 function renderMain(det,inj,pol,san,comp,reid,summary,scope){
   var pc=bc(det.risk),cc=bc(comp.score),rc=bc(reid.score);
   var html="";
