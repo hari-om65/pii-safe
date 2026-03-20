@@ -382,6 +382,42 @@ function handleFile(input){
   reader.readAsText(file);
 }
 
+function sanitizeJSON(obj, scope, depth) {
+  if(depth > 5) return obj;
+  if(typeof obj === 'string') {
+    var d = detectPII(obj);
+    if(d.matches.length === 0) return obj;
+    var pol = evalPolicy("analysis", d.types);
+    var san = sanitize(obj, d.matches, pol.decision, pol.affected, scope);
+    return san.text;
+  }
+  if(Array.isArray(obj)) {
+    return obj.map(function(item){ return sanitizeJSON(item, scope, depth+1); });
+  }
+  if(typeof obj === 'object' && obj !== null) {
+    var result = {};
+    for(var key in obj) {
+      result[key] = sanitizeJSON(obj[key], scope, depth+1);
+    }
+    return result;
+  }
+  return obj;
+}
+
+function tryParseAndSanitizeJSON(text, scope) {
+  try {
+    var parsed = JSON.parse(text);
+    var sanitized = sanitizeJSON(parsed, scope, 0);
+    return {
+      isJSON: true,
+      result: JSON.stringify(sanitized, null, 2),
+      original: parsed
+    };
+  } catch(e) {
+    return { isJSON: false };
+  }
+}
+
 function runAnalysis(){
   var text=document.getElementById("mainInput").value.trim();
   if(!text)return;
@@ -391,7 +427,14 @@ function runAnalysis(){
   btn.innerHTML="<span class=\"sp\"></span>Analyzing...";
   btn.disabled=true;
   setTimeout(function(){
-    var cleanText=neutralizeInjection(text);
+    var jsonResult = tryParseAndSanitizeJSON(text, scope);
+    var cleanText;
+    var isJSON = jsonResult.isJSON;
+    if(isJSON) {
+      cleanText = jsonResult.result;
+    } else {
+      cleanText = neutralizeInjection(text);
+    }
     var det=detectPII(cleanText);
     var inj=scanInj(text);
     var pol=det.matches.length>0?evalPolicy(op,det.types):{decision:"allow",rule:"no_pii",ruleNum:"#N-01",affected:[],reason:"No PII detected."};
