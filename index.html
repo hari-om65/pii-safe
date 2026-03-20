@@ -279,7 +279,7 @@ function sanitize(text,matches,decision,affected,scope){
   var out=text;
   sorted.forEach(function(m){
     var rep;
-    var FORCE=["ssn","credit_card","api_key","jwt","password","ip_address","ipv6"];
+    var FORCE=["credit_card","api_key","jwt","password","aadhaar"];
     if(FORCE.indexOf(m.type)>=0){
       rep="[REDACTED]";
     } else if(decision==="redact"){
