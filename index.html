@@ -210,19 +210,13 @@ function maskPartial(value,type){
 
 function neutralizeInjection(text){
   if(!text) return text;
-  text=text.replace(/'?\s*OR\s*[\d'"=][^;]*(;[^
-]*)?/gi,"[BLOCKED: SQL injection]");
-  text=text.replace(/DROP\s+TABLE[^;]*(;)?/gi,"[BLOCKED: SQL injection]");
-  text=text.replace(/UNION\s+SELECT[^;]*(;)?/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/OR\s+\d+=\d+|OR\s+'[^']*'='[^']*'/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/DROP\s+TABLE\s+\w+/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/UNION\s+SELECT/gi,"[BLOCKED: SQL injection]");
   text=text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  text=text.replace(/;\s*ls\s+-[a-z]+[^
-]*/gi,"[INVALID INPUT]");
-  text=text.replace(/&&\s*echo[^
-]*/gi,"[INVALID INPUT]");
-  text=text.replace(/FAKE_LOG_ENTRY[^
-]*/gi,"[LOG INJECTION REMOVED]");
-  text=text.replace(/\n\n[^
-]*/g,"");
+  text=text.replace(/;\s*ls\s+-\w+[^;]*/gi,"[INVALID INPUT]");
+  text=text.replace(/&&\s*echo\s+\S+/gi,"[INVALID INPUT]");
+  text=text.replace(/FAKE_LOG_ENTRY[^,]*/gi,"[LOG INJECTION REMOVED]");
   return text;
 }
 
@@ -328,7 +322,7 @@ function generateAISummary(d,inj,comp,reid){
 function bc(s){return s>=0.85?"#fc8181":s>=0.65?"#f6ad55":s>=0.35?"#63b3ed":"#68d391";}
 function rbcl(l){return{critical:"rb-c",high:"rb-h",medium:"rb-m",low:"rb-l"}[l]||"rb-l";}
 function ltcl(l){return{GDPR:"lt-g",HIPAA:"lt-h",CCPA:"lt-c","PCI-DSS":"lt-p",SOC2:"lt-s"}[l]||"lt-s";}
-function tgcl(t){return{email:"t-em",ip_address:"t-ip",ssn:"t-ss",credit_card:"t-cc",phone:"t-ph",api_key:"t-ap",username:"t-us",jwt:"t-ap"}[t]||"t-em";}";}
+function tgcl(t){var m={email:"t-em",ip_address:"t-ip",ssn:"t-ss",credit_card:"t-cc",phone:"t-ph",api_key:"t-ap",username:"t-us",jwt:"t-ap"};return m[t]||"t-em";}";}
 function dccl(d){return{pseudonymize:"t-ps",redact:"t-re",allow:"t-al",block:"t-bl"}[d]||"t-al";}
 function svcl(s){return{critical:"sv-c",high:"sv-h",medium:"sv-m"}[s]||"sv-m";}
 function hl(t){return t.replace(/\[([a-zA-Z0-9_]+)_REDACTED\]/g,'<mark class="mr">[$1_REDACTED]</mark>').replace(/([A-Z]{3,}_[a-f0-9]{8})/g,'<mark class="mp">$1</mark>').replace(/(\*{3,})/g,'<mark class="mr">$1</mark>').replace(/\[BLOCKED[^\]]*\]/g,'<mark style="background:rgba(252,129,129,0.2);color:#fc8181;padding:1px 4px;border-radius:3px">$&</mark>').replace(/\[INVALID INPUT[^\]]*\]/g,'<mark style="background:rgba(246,173,85,0.2);color:#f6ad55;padding:1px 4px;border-radius:3px">$&</mark>');}
