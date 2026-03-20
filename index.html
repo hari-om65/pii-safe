@@ -385,10 +385,18 @@ function handleFile(input){
 function sanitizeJSON(obj, scope, depth) {
   if(depth > 5) return obj;
   if(typeof obj === 'string') {
-    var d = detectPII(obj);
-    if(d.matches.length === 0) return obj;
+    // Step 1: Run injection neutralization on the value
+    var cleaned = neutralizeInjection(obj);
+    // Step 2: Check for injection attacks
+    var inj = scanInj(cleaned);
+    if(inj.detected && inj.score >= 0.5) {
+      return "[BLOCKED: " + inj.findings[0].name + "]";
+    }
+    // Step 3: Detect and sanitize PII
+    var d = detectPII(cleaned);
+    if(d.matches.length === 0) return cleaned;
     var pol = evalPolicy("analysis", d.types);
-    var san = sanitize(obj, d.matches, pol.decision, pol.affected, scope);
+    var san = sanitize(cleaned, d.matches, pol.decision, pol.affected, scope);
     return san.text;
   }
   if(Array.isArray(obj)) {
@@ -397,10 +405,12 @@ function sanitizeJSON(obj, scope, depth) {
   if(typeof obj === 'object' && obj !== null) {
     var result = {};
     for(var key in obj) {
+      // Sanitize each value individually - keys are never touched
       result[key] = sanitizeJSON(obj[key], scope, depth+1);
     }
     return result;
   }
+  // Numbers, booleans, null - leave unchanged
   return obj;
 }
 
