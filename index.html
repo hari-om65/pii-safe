@@ -214,10 +214,10 @@ var auditLog=[];
 function maskPartial(value,type){
   if(!value||value.length===0) return "[REDACTED]";
   var FULL=["ssn","credit_card","api_key","jwt","password","ip_address"];
-  if(FULL.indexOf(type)>=0) return "["+type.toUpperCase().replace("_","-")+"-REDACTED]";
+  if(FULL.indexOf(type)>=0) return "[REDACTED]";
   if(type==="email"){var at=value.indexOf("@");if(at<0)return "[EMAIL-REDACTED]";var local=value.slice(0,at);var domain=value.slice(at+1);return(local.length>2?local[0]+"***"+local[local.length-1]:local[0]+"***")+"@"+domain;}
   if(type==="phone"){var d=value.replace(/[^0-9]/g,"");return "***-***-"+(d.length>=4?d.slice(-4):"????");}
-  return "["+type.toUpperCase().replace("_","-")+"-REDACTED]";
+  return "[REDACTED]";
 }
 
 function neutralizeInjection(text){
