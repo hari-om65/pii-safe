@@ -210,17 +210,19 @@ var auditLog=[];
 
 function maskPartial(value,type){
   if(!value||value.length===0) return "[REDACTED]";
-  if(type==="email"){var at=value.indexOf("@");if(at<0)return "***@***";var local=value.slice(0,at);var domain=value.slice(at+1);return(local.length>2?local[0]+"***"+local[local.length-1]:local[0]+"***")+"@"+domain;}
-  if(type==="ssn"){var d=value.replace(/[^0-9]/g,"");return "***-**-"+(d.length>=4?d.slice(-4):"????");}
-  if(type==="credit_card"){var d=value.replace(/[^0-9]/g,"");return d.slice(0,4)+"-****-****-"+(d.length>=4?d.slice(-4):"????");}
-  if(type==="api_key"||type==="jwt"){if(value.length<=8)return "****";return value.slice(0,8)+"****"+value.slice(-4);}
+  var FULL=["ssn","credit_card","api_key","jwt","password","ip_address"];
+  if(FULL.indexOf(type)>=0) return "["+type.toUpperCase().replace("_","-")+"-REDACTED]";
+  if(type==="email"){var at=value.indexOf("@");if(at<0)return "[EMAIL-REDACTED]";var local=value.slice(0,at);var domain=value.slice(at+1);return(local.length>2?local[0]+"***"+local[local.length-1]:local[0]+"***")+"@"+domain;}
   if(type==="phone"){var d=value.replace(/[^0-9]/g,"");return "***-***-"+(d.length>=4?d.slice(-4):"????");}
-  if(type==="ip_address"){var parts=value.split(".");if(parts.length===4)return parts[0]+"."+parts[1]+".***.***";return "[IP_MASKED]";}
-  if(type==="password") return "[HASHED_PASSWORD]";
-  return "["+type.toUpperCase().replace("_","")+"_REDACTED]";
+  return "["+type.toUpperCase().replace("_","-")+"-REDACTED]";
 }
 
 function neutralizeInjection(text){
+  if(!text) return text;
+  // Remove fake log entries
+  text=text.replace(/\\n\\n[A-Z_]+:[^\n]*/g," [INVALID LOG ENTRY]");
+  text=text.replace(/FAKE_LOG_ENTRY[^\n]*/gi,"[INVALID LOG ENTRY]");
+  text=text.replace(/Admin granted access/gi,"[INVALID LOG ENTRY]");
   if(!text) return text;
   text=text.replace(/OR\s+\d+=\d+|OR\s+'[^']*'='[^']*'/gi,"[BLOCKED: SQL injection]");
   text=text.replace(/DROP\s+TABLE\s+\w+/gi,"[BLOCKED: SQL injection]");
@@ -295,7 +297,9 @@ function mapCompliance(types){
   });
   var ss={critical:1.0,high:0.75,medium:0.5,low:0.25};
   var maxSev=violations.reduce(function(a,v){return ss[v.sev]>ss[a]?v.sev:a;},"low");
-  var compScore=violations.length>0?(ss[maxSev]||0.5):0.0;
+  var baseScore=violations.length>0?(ss[maxSev]||0.5):0.0;
+  var penalty=Math.min(violations.length*0.08,0.5);
+  var compScore=violations.length>0?Math.min(baseScore+penalty,1.0):0.0;
   return{violations:violations,laws:laws,score:compScore,maxSev:maxSev};
 }
 
