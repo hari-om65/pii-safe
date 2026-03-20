@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Redirecting...</title>
+<script>
+// Temporary redirect while full site loads
+document.title = "PII-Safe — Privacy Guard for Agentic AI";
+</script>
+</head>
+<body>
+<p>Loading...</p>
+</body>
+</html>
