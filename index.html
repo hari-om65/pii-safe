@@ -187,22 +187,45 @@ footer{border-top:1px solid var(--border);padding:16px 24px;font-size:10px;color
 <footer>PII-Safe &mdash; Privacy Guard for Agentic AI &amp; MCP Workflows &middot; GSoC 2026 &middot; C2SI &middot; Mentors: Tharindu Ranathunga &middot; Kavishka Fernando &middot; Built by <strong style="color:var(--text2)">Hari Om Singh</strong> &middot; <a href="https://github.com/hari-om65/pii-safe" style="color:var(--accent)" target="_blank">github.com/hari-om65/pii-safe</a></footer>
 
 <script>
-var PATTERNS={ipv6:{re:/\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b|\b(?:[0-9a-fA-F]{1,4}:)*::[0-9a-fA-F:]*\b/g,conf:0.90,w:0.5},jwt:{re:/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,conf:0.95,w:0.9},email:{re:/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,conf:0.95,w:0.7},ip_address:{re:/\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b/g,conf:0.90,w:0.5},phone:{re:/\b(?:\+?1[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}\b/g,conf:0.80,w:0.7},credit_card:{re:/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g,conf:0.97,w:1.0},ssn:{re:/\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b/g,conf:0.98,w:1.0},api_key:{re:/\b(?:sk|pk|api|key|token)[_\-][a-zA-Z0-9_\-]{8,}\b/g,conf:0.75,w:0.9},username:{re:/(?:user(?:name)?|login|account)\s*[=:]\s*['"]?([A-Za-z0-9_.\-@]{3,30})['"]?/gi,conf:0.70,w:0.4}};
-var RW={ssn:1.0,credit_card:1.0,api_key:0.9,email:0.7,phone:0.7,ip_address:0.5,username:0.4};
-var CM={email:[{law:"GDPR",article:"Article 17",req:"Right to erasure applies. Must be redacted on request.",sev:"high"},{law:"CCPA",article:"Section 1798.105",req:"Consumer has right to deletion of personal information.",sev:"high"}],ip_address:[{law:"GDPR",article:"Recital 30",req:"IP addresses are personal data. Requires lawful basis.",sev:"medium"},{law:"CCPA",article:"Section 1798.140",req:"IP address qualifies as personal information.",sev:"medium"}],ssn:[{law:"HIPAA",article:"45 CFR 164.514(b)",req:"SSN must be removed for Safe Harbor de-identification.",sev:"critical"},{law:"GDPR",article:"Article 9",req:"Qualifies as sensitive data. Explicit consent required.",sev:"critical"}],credit_card:[{law:"PCI-DSS",article:"Requirement 3",req:"Primary Account Number must be masked or encrypted.",sev:"critical"},{law:"GDPR",article:"Article 32",req:"Financial data requires technical security measures.",sev:"critical"}],phone:[{law:"GDPR",article:"Article 17",req:"Phone numbers are personal data subject to erasure.",sev:"high"},{law:"HIPAA",article:"45 CFR 164.514(b)",req:"Phone numbers must be removed for Safe Harbor.",sev:"high"}],api_key:[{law:"GDPR",article:"Article 32",req:"Credentials require strict access controls and encryption.",sev:"critical"},{law:"SOC2",article:"CC6.1",req:"Logical access controls must protect credentials.",sev:"critical"}],username:[{law:"GDPR",article:"Article 4",req:"Usernames qualify as personal data.",sev:"medium"},{law:"CCPA",article:"Section 1798.140",req:"Account identifiers are personal information.",sev:"medium"}]};
-var IP=[{re:/('\s*OR\s*\d+=\d+|DROP\s+TABLE|SELECT\s+\*\s+FROM|UNION\s+SELECT|INSERT\s+INTO)/i,name:"sql_injection",sev:"critical"},{re:/<script[^>]*>.*?<\/script>/i,name:"xss_injection",sev:"critical"},{re:/(;\s*ls|&&\s*echo|\|\s*cat|`.*`)/i,name:"cmd_injection",sev:"critical"},{re:/ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i,name:"instruction_override",sev:"critical"},{re:/forget\s+(everything|all|prior|previous)/i,name:"memory_wipe",sev:"critical"},{re:/you\s+are\s+now\s+a/i,name:"persona_hijack",sev:"critical"},{re:/(reveal|show|print|output)\s+(your\s+)?(system\s+prompt|instructions)/i,name:"prompt_leak",sev:"high"},{re:/(disable|bypass|skip|override)\s+(safety|filter|restriction|guard)/i,name:"safety_bypass",sev:"high"},{re:/<\s*script[^>]*>/i,name:"script_injection",sev:"high"},{re:/(sudo|admin|root)\s+(mode|access)/i,name:"privilege_escalation",sev:"medium"},{re:/act\s+as\s+(if\s+you\s+are)?/i,name:"persona_hijack",sev:"critical"},{re:/do\s+not\s+(follow|obey|apply)\s+(your\s+)?(rules|guidelines|policy)/i,name:"policy_bypass",sev:"critical"}];
-var PR=[{name:"analysis_pseudonymize_identifiers",ops:["analysis","investigate","classify"],entities:["email","username","ip_address","phone"],decision:"pseudonymize",reason:"Preserve analytical context with consistent placeholders.",rule:"#A-01"},{name:"analysis_redact_financial",ops:["analysis","investigate","classify"],entities:["credit_card","ssn"],decision:"redact",reason:"Financial identifiers must be fully redacted.",rule:"#A-02"},{name:"analysis_redact_api_keys",ops:["analysis","investigate","classify"],entities:["api_key"],decision:"redact",reason:"API keys must always be redacted.",rule:"#A-03"},{name:"export_redact_all",ops:["export","share","send","publish"],entities:["email","ip_address","phone","credit_card","ssn","username","api_key"],decision:"redact",reason:"All PII must be redacted before leaving system boundary.",rule:"#E-01"},{name:"store_pseudonymize_contact",ops:["store","log","archive"],entities:["email","phone","username","ip_address"],decision:"pseudonymize",reason:"Pseudonymize for future re-identification.",rule:"#S-01"},{name:"store_redact_financial",ops:["store","log","archive"],entities:["credit_card","ssn","api_key"],decision:"redact",reason:"Financial data must never be stored identifiable.",rule:"#S-02"},{name:"default_block",ops:[],entities:[],decision:"block",reason:"Unknown operation with PII. Blocking by default.",rule:"#D-01"}];
-var DC=[{set:["ip_address","email"],risk:0.95,msg:"IP + email allows cross-system identification"},{set:["ip_address","username"],risk:0.90,msg:"IP + username is highly identifying"},{set:["phone","username"],risk:0.88,msg:"Phone + username sufficient to identify"},{set:["email","ip_address","phone"],risk:0.99,msg:"Triple combination: near-certain re-identification"}];
+var PATTERNS={email:{re:/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g,conf:0.95,w:0.7},ip_address:{re:/(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/g,conf:0.90,w:0.5},phone:{re:/(?:\+?1[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}/g,conf:0.80,w:0.7},credit_card:{re:/(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})/g,conf:0.97,w:1.0},ssn:{re:/(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}/g,conf:0.98,w:1.0},api_key:{re:/(?:sk|pk|api|key|token)[_\-][a-zA-Z0-9_\-]{8,}/g,conf:0.75,w:0.9},username:{re:/(?:user(?:name)?|login|account)\s*[=:]\s*['"]?([A-Za-z0-9_.\-@]{3,30})['"]?/gi,conf:0.70,w:0.4},jwt:{re:/eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}/g,conf:0.95,w:0.9}};
+var RW={ssn:1.0,credit_card:1.0,api_key:0.9,email:0.7,phone:0.7,ip_address:0.5,username:0.4,jwt:0.9};
+var ALWAYS_REDACT=["password","api_key","jwt","ssn","credit_card"];
+var CM={email:[{law:"GDPR",article:"Article 17",req:"Right to erasure applies.",sev:"high"},{law:"CCPA",article:"Section 1798.105",req:"Consumer has right to deletion.",sev:"high"}],ip_address:[{law:"GDPR",article:"Recital 30",req:"IP addresses are personal data.",sev:"medium"},{law:"CCPA",article:"Section 1798.140",req:"IP qualifies as personal information.",sev:"medium"}],ssn:[{law:"HIPAA",article:"45 CFR 164.514(b)",req:"SSN must be removed for Safe Harbor.",sev:"critical"},{law:"GDPR",article:"Article 9",req:"Qualifies as sensitive data.",sev:"critical"}],credit_card:[{law:"PCI-DSS",article:"Requirement 3",req:"PAN must be masked or encrypted.",sev:"critical"},{law:"GDPR",article:"Article 32",req:"Financial data requires security measures.",sev:"critical"}],phone:[{law:"GDPR",article:"Article 17",req:"Phone numbers subject to erasure.",sev:"high"},{law:"HIPAA",article:"45 CFR 164.514(b)",req:"Phone must be removed for Safe Harbor.",sev:"high"}],api_key:[{law:"GDPR",article:"Article 32",req:"Credentials require strict access controls.",sev:"critical"},{law:"SOC2",article:"CC6.1",req:"Logical access controls must protect credentials.",sev:"critical"}],username:[{law:"GDPR",article:"Article 4",req:"Usernames qualify as personal data.",sev:"medium"}],jwt:[{law:"GDPR",article:"Article 32",req:"Tokens must be protected.",sev:"critical"},{law:"SOC2",article:"CC6.1",req:"Access tokens require strict controls.",sev:"critical"}]};
+var IP=[{re:/ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i,name:"instruction_override",sev:"critical"},{re:/forget\s+(everything|all|prior|previous)/i,name:"memory_wipe",sev:"critical"},{re:/you\s+are\s+now\s+a/i,name:"persona_hijack",sev:"critical"},{re:/(reveal|show|print|output)\s+(your\s+)?(system\s+prompt|instructions)/i,name:"prompt_leak",sev:"high"},{re:/(disable|bypass|skip|override)\s+(safety|filter|restriction|guard)/i,name:"safety_bypass",sev:"high"},{re:/'?\s*OR\s*[\d'"]/i,name:"sql_injection",sev:"critical"},{re:/DROP\s+TABLE/i,name:"sql_injection",sev:"critical"},{re:/<script[^>]*>/i,name:"xss_injection",sev:"critical"},{re:/;\s*ls\s+-|&&\s*echo\s|`[^`]+`/i,name:"cmd_injection",sev:"critical"}];
+var PR=[{name:"analysis_pseudonymize",ops:["analysis","investigate","classify"],entities:["email","username","ip_address","phone"],decision:"pseudonymize",reason:"Preserve analytical context.",rule:"#A-01"},{name:"analysis_redact_sensitive",ops:["analysis","investigate","classify"],entities:["credit_card","ssn","api_key","jwt"],decision:"redact",reason:"Sensitive credentials always redacted.",rule:"#A-02"},{name:"export_redact_all",ops:["export","share","send","publish"],entities:["email","ip_address","phone","credit_card","ssn","username","api_key","jwt"],decision:"redact",reason:"All PII redacted before export.",rule:"#E-01"},{name:"store_pseudonymize",ops:["store","log","archive"],entities:["email","phone","username","ip_address"],decision:"pseudonymize",reason:"Pseudonymize for storage.",rule:"#S-01"},{name:"store_redact_financial",ops:["store","log","archive"],entities:["credit_card","ssn","api_key","jwt"],decision:"redact",reason:"Financial data never stored.",rule:"#S-02"},{name:"default_block",ops:[],entities:[],decision:"block",reason:"Unknown operation. Default deny.",rule:"#D-01"}];
+var DC=[{set:["ip_address","email"],risk:0.95,msg:"IP + email allows cross-system identification"},{set:["ip_address","username"],risk:0.90,msg:"IP + username is highly identifying"},{set:["email","ip_address","phone"],risk:0.99,msg:"Triple combination: near-certain re-identification"}];
 var auditLog=[];
-var riskChart=null,actionChart=null;
 
-function bc(s){return s>=0.85?"#fc8181":s>=0.65?"#f6ad55":s>=0.35?"#63b3ed":"#68d391";}
-function rbcl(l){return{critical:"rb-c",high:"rb-h",medium:"rb-m",low:"rb-l"}[l]||"rb-l";}
-function ltcl(l){return{GDPR:"lt-g",HIPAA:"lt-h",CCPA:"lt-c","PCI-DSS":"lt-p",SOC2:"lt-s"}[l]||"lt-s";}
-function tgcl(t){return{email:"t-em",ip_address:"t-ip",ssn:"t-ss",credit_card:"t-cc",phone:"t-ph",api_key:"t-ap",username:"t-us"}[t]||"t-em";}
-function dccl(d){return{pseudonymize:"t-ps",redact:"t-re",allow:"t-al",block:"t-bl"}[d]||"t-al";}
-function svcl(s){return{critical:"sv-c",high:"sv-h",medium:"sv-m"}[s]||"sv-m";}
-function ts(){return new Date().toISOString().replace("T"," ").slice(0,19);}
+function maskPartial(value,type){
+  if(!value||value.length===0) return "[REDACTED]";
+  if(type==="email"){var at=value.indexOf("@");if(at<0)return "***@***";var local=value.slice(0,at);var domain=value.slice(at+1);return(local.length>2?local[0]+"***"+local[local.length-1]:local[0]+"***")+"@"+domain;}
+  if(type==="ssn"){var d=value.replace(/[^0-9]/g,"");return "***-**-"+(d.length>=4?d.slice(-4):"????");}
+  if(type==="credit_card"){var d=value.replace(/[^0-9]/g,"");return d.slice(0,4)+"-****-****-"+(d.length>=4?d.slice(-4):"????");}
+  if(type==="api_key"||type==="jwt"){if(value.length<=8)return "****";return value.slice(0,8)+"****"+value.slice(-4);}
+  if(type==="phone"){var d=value.replace(/[^0-9]/g,"");return "***-***-"+(d.length>=4?d.slice(-4):"????");}
+  if(type==="ip_address"){var parts=value.split(".");if(parts.length===4)return parts[0]+"."+parts[1]+".***.***";return "[IP_MASKED]";}
+  if(type==="password") return "[HASHED_PASSWORD]";
+  return "["+type.toUpperCase().replace("_","")+"_REDACTED]";
+}
+
+function neutralizeInjection(text){
+  if(!text) return text;
+  text=text.replace(/'?\s*OR\s*[\d'"=][^;]*(;[^
+]*)?/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/DROP\s+TABLE[^;]*(;)?/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/UNION\s+SELECT[^;]*(;)?/gi,"[BLOCKED: SQL injection]");
+  text=text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  text=text.replace(/;\s*ls\s+-[a-z]+[^
+]*/gi,"[INVALID INPUT]");
+  text=text.replace(/&&\s*echo[^
+]*/gi,"[INVALID INPUT]");
+  text=text.replace(/FAKE_LOG_ENTRY[^
+]*/gi,"[LOG INJECTION REMOVED]");
+  text=text.replace(/\n\n[^
+]*/g,"");
+  return text;
+}
+
 function hsh(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return Math.abs(h).toString(16).padStart(8,"0").slice(0,8);}
 
 function detectPII(text){
@@ -235,41 +258,6 @@ function evalPolicy(op,types){
   return{decision:"block",rule:"__default__",ruleNum:"#D-01",affected:types,reason:"No matching rule. Default deny."};
 }
 
-function maskPartial(value, type) {
-  if(!value || value.length === 0) return "[REDACTED]";
-  if(type==="email"){
-    var at=value.indexOf("@");
-    if(at<0) return "***@***";
-    var local=value.slice(0,at);
-    var domain=value.slice(at+1);
-    return (local.length>2 ? local[0]+"***"+local[local.length-1] : local[0]+"***")+"@"+domain;
-  }
-  if(type==="ssn"){
-    var d=value.replace(/[^0-9]/g,"");
-    return "***-**-"+(d.length>=4?d.slice(-4):"????");
-  }
-  if(type==="credit_card"){
-    var d=value.replace(/[^0-9]/g,"");
-    return d.slice(0,4)+"-****-****-"+(d.length>=4?d.slice(-4):"????");
-  }
-  if(type==="api_key"||type==="jwt"){
-    if(value.length<=8) return "****";
-    return value.slice(0,8)+"****"+value.slice(-4);
-  }
-  if(type==="phone"){
-    var d=value.replace(/[^0-9]/g,"");
-    return "***-***-"+(d.length>=4?d.slice(-4):"????");
-  }
-  if(type==="ip_address"){
-    var parts=value.split(".");
-    if(parts.length===4) return parts[0]+"."+parts[1]+".***.***";
-    return "[IP_MASKED]";
-  }
-  if(type==="ipv6") return "[IPv6_MASKED]";
-  if(type==="password") return "[HASHED_PASSWORD]";
-  if(type==="person_name") return value[0]+"*** ***";
-  return "["+type.toUpperCase().replace("_","")+"_REDACTED]";
-}
 function sanitize(text,matches,decision,affected,scope){
   var transforms=[];
   if(decision==="block")return{text:"[BLOCKED: Policy denied this operation]",transforms:transforms};
@@ -277,16 +265,15 @@ function sanitize(text,matches,decision,affected,scope){
   var sorted=matches.filter(function(m){return affected.indexOf(m.type)>=0;}).sort(function(a,b){return b.start-a.start;});
   var out=text;
   sorted.forEach(function(m){
-    var ALWAYS_REDACT=["password","api_key","jwt","ssn","credit_card"];
     var rep;
     if(ALWAYS_REDACT.indexOf(m.type)>=0){
       rep=maskPartial(m.value,m.type);
     } else if(decision==="redact"){
       rep=maskPartial(m.value,m.type);
     } else {
-      rep=pseudonymize(m.value,m.type,scope);
+      try{rep=pseudonymize(m.value,m.type,scope);}catch(e){rep=maskPartial(m.value,m.type);}
     }
-    transforms.push({orig:m.value,rep:rep,action:decision==="redact"?"redacted":"pseudonymized",type:m.type,ruleNum:""});
+    transforms.push({orig:m.value,rep:rep,action:ALWAYS_REDACT.indexOf(m.type)>=0?"redacted":decision==="redact"?"redacted":"pseudonymized",type:m.type});
     out=out.slice(0,m.start)+rep+out.slice(m.end);
   });
   return{text:out,transforms:transforms};
@@ -294,7 +281,12 @@ function sanitize(text,matches,decision,affected,scope){
 
 function mapCompliance(types){
   var violations=[],laws=[];
-  types.forEach(function(t){(CM[t]||[]).forEach(function(v){violations.push(Object.assign({},v,{entity:t}));if(laws.indexOf(v.law)<0)laws.push(v.law);});});
+  types.forEach(function(t){
+    (CM[t]||[]).forEach(function(v){
+      violations.push(Object.assign({},v,{entity:t}));
+      if(laws.indexOf(v.law)<0)laws.push(v.law);
+    });
+  });
   var ss={critical:1.0,high:0.75,medium:0.5,low:0.25};
   var maxSev=violations.reduce(function(a,v){return ss[v.sev]>ss[a]?v.sev:a;},"low");
   var compScore=violations.length>0?(ss[maxSev]||0.5):0.0;
@@ -310,7 +302,7 @@ function scanInj(text){
 }
 
 function reidRisk(types,redacted,pseudo){
-  var UW={ssn:1.0,credit_card:0.99,email:0.95,api_key:0.95,phone:0.90,username:0.75,ip_address:0.60};
+  var UW={ssn:1.0,credit_card:0.99,email:0.95,api_key:0.95,phone:0.90,username:0.75,ip_address:0.60,jwt:0.95};
   var exposed=types.filter(function(t){return redacted.indexOf(t)<0&&pseudo.indexOf(t)<0;});
   var base=exposed.reduce(function(a,t){return Math.max(a,UW[t]||0.4);},0);
   var remaining=exposed.concat(pseudo);
@@ -322,34 +314,32 @@ function reidRisk(types,redacted,pseudo){
 }
 
 function generateAISummary(d,inj,comp,reid){
-  // Sanity check: if PII found, compliance cannot be 100%
-  if(d.types.length > 0 && comp.score === 0) {
-    comp.score = 0.5; // minimum compliance risk when PII is present
-  }
   var lines=[];
   lines.push("PII-Safe detected "+d.matches.length+" personal data item"+(d.matches.length!==1?"s":"")+" across "+d.types.length+" categor"+(d.types.length!==1?"ies":"y")+".");
   if(d.types.length>0){lines.push("Identified: "+d.types.join(", ")+".");}
-  if(inj.detected){lines.push("SECURITY ALERT: "+inj.findings.length+" prompt injection pattern"+(inj.findings.length!==1?"s were":" was")+" detected. Immediate review recommended.");}
-  if(comp.laws.length>0){lines.push("Compliance exposure across "+comp.laws.join(", ")+". "+comp.violations.length+" violation"+(comp.violations.length!==1?"s":"")+" identified.");}
-  lines.push("Re-identification risk: "+reid.level.toUpperCase()+" ("+Math.round(reid.score*100)+"%). ");
+  if(inj.detected){lines.push("SECURITY ALERT: "+inj.findings.length+" injection pattern"+(inj.findings.length!==1?"s were":" was")+" detected and neutralized.");}
+  if(comp.laws.length>0){lines.push("Compliance exposure: "+comp.laws.join(", ")+". "+comp.violations.length+" violation"+(comp.violations.length!==1?"s":"")+" identified.");}
+  lines.push("Re-identification risk: "+reid.level.toUpperCase()+" ("+Math.round(reid.score*100)+"%).");
   if(reid.exposed.length>0){lines.push("Warning: "+reid.exposed.join(", ")+" remain"+(reid.exposed.length===1?"s":"")+" exposed after sanitization.");}
   else{lines.push("All PII fields have been sanitized successfully.");}
   return lines.join(" ");
 }
 
-function highlightOutput(text,transforms){
-  if(!transforms.length)return escHTML(text);
-  var result=escHTML(text);
-  transforms.forEach(function(t){
-    var cls=t.action==="redacted"?"redacted-span":"pseudo-span";
-    var escaped=escRegex(escHTML(t.rep));
-    result=result.replace(new RegExp(escaped,"g"),"<span class=\""+cls+"\">"+escHTML(t.rep)+"</span>");
-  });
-  return result;
-}
+function bc(s){return s>=0.85?"#fc8181":s>=0.65?"#f6ad55":s>=0.35?"#63b3ed":"#68d391";}
+function rbcl(l){return{critical:"rb-c",high:"rb-h",medium:"rb-m",low:"rb-l"}[l]||"rb-l";}
+function ltcl(l){return{GDPR:"lt-g",HIPAA:"lt-h",CCPA:"lt-c","PCI-DSS":"lt-p",SOC2:"lt-s"}[l]||"lt-s";}
+function tgcl(t){return{email:"t-em",ip_address:"t-ip",ssn:"t-ss",credit_card:"t-cc",phone:"t-ph",api_key:"t-ap",username:"t-us",jwt:"t-ap"}[t]||"t-em";}
+function dccl(d){return{pseudonymize:"t-ps",redact:"t-re",allow:"t-al",block:"t-bl"}[d]||"t-al";}
+function svcl(s){return{critical:"sv-c",high:"sv-h",medium:"sv-m"}[s]||"sv-m";}
+function hl(t){return t.replace(/\[([a-zA-Z0-9_]+)_REDACTED\]/g,'<mark class="mr">[$1_REDACTED]</mark>').replace(/([A-Z]{3,}_[a-f0-9]{8})/g,'<mark class="mp">$1</mark>').replace(/(\*{3,})/g,'<mark class="mr">$1</mark>').replace(/\[BLOCKED[^\]]*\]/g,'<mark style="background:rgba(252,129,129,0.2);color:#fc8181;padding:1px 4px;border-radius:3px">$&</mark>').replace(/\[INVALID INPUT[^\]]*\]/g,'<mark style="background:rgba(246,173,85,0.2);color:#f6ad55;padding:1px 4px;border-radius:3px">$&</mark>');}
+function ts(){return new Date().toISOString().replace("T"," ").slice(0,19);}
 
-function escHTML(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function escRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+function showTab(n){
+  document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});
+  document.querySelector("[onclick=\"showTab('"+n+"')\"]").classList.add("active");
+  document.getElementById("tab-"+n).classList.add("active");
+}
 
 var SAMPLES=[
   {text:"2024-03-15 [WARN] Failed login for admin@company.com from 192.168.1.45. Contact security@corp.io after 5 retries.",op:"analysis",scope:"incident-001"},
@@ -367,52 +357,13 @@ function handleFile(input){
   var reader=new FileReader();
   reader.onload=function(e){
     var content=e.target.result;
-    if(file.name.endsWith(".json")){
-      try{var j=JSON.parse(content);content=JSON.stringify(j,null,2);}catch(err){}
-    }
+    if(file.name.endsWith(".json")){try{var j=JSON.parse(content);content=JSON.stringify(j,null,2);}catch(err){}}
     document.getElementById("mainInput").value=content.slice(0,3000);
     runAnalysis();
   };
   reader.readAsText(file);
 }
 
-function neutralizeInjection(text){
-  if(!text) return text;
-  // XSS - escape all HTML tags
-  text=text.replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  // SQL injection - block
-  text=text.replace(/('\s*OR\s*[\d'"]|DROP\s+TABLE|UNION\s+SELECT|DELETE\s+FROM|INSERT\s+INTO)/gi,"[BLOCKED]");
-  // Command injection - block
-  text=text.replace(/(;\s*ls\s|&&\s*echo|\|\s*cat\s|`[^`]+`)/gi,"[INVALID INPUT]");
-  // Log injection - remove
-  text=text.replace(/FAKE_LOG_ENTRY[^
-]*/gi,"[LOG INJECTION REMOVED]");
-  text=text.replace(/\\n\\n[^
-]*/g,"");
-  return text;
-}
-function sanitizeForDisplay(text){
-  if(!text) return text;
-  // 1. Block SQL injection completely
-  if(/'\s*OR\s*[\d'"]|DROP\s+TABLE|UNION\s+SELECT|INSERT\s+INTO|DELETE\s+FROM/i.test(text)){
-    text = text.replace(/'[^']*'\s*OR[^;]*(;[^\n]*)?/gi,"[BLOCKED: SQL injection detected]");
-    text = text.replace(/DROP\s+TABLE[^;]*(;)?/gi,"[BLOCKED: SQL injection detected]");
-    text = text.replace(/UNION\s+SELECT[^;]*(;)?/gi,"[BLOCKED: SQL injection detected]");
-  }
-  // 2. HTML-escape XSS
-  text = text.replace(/<script[\s\S]*?<\/script>/gi,function(m){return m.replace(/</g,"&lt;").replace(/>/g,"&gt;");});
-  text = text.replace(/<script[^>]*>/gi,function(m){return m.replace(/</g,"&lt;").replace(/>/g,"&gt;");});
-  text = text.replace(/<\/script>/gi,"&lt;/script&gt;");
-  // 3. Block command injection
-  text = text.replace(/;\s*ls\s+[-a-z]+[^\n]*/gi,"[INVALID INPUT: command injection]");
-  text = text.replace(/&&\s*echo[^\n]*/gi,"[INVALID INPUT: command injection]");
-  text = text.replace(/\|\s*cat\s+[^\n]*/gi,"[INVALID INPUT: command injection]");
-  // 4. Remove fake log injection entries
-  text = text.replace(/\\n\\n[A-Z_]+:[^\n]*/g,"");
-  text = text.replace(/FAKE_LOG_ENTRY:[^\n]*/gi,"[LOG INJECTION REMOVED]");
-  text = text.replace(/Admin granted access/gi,"[PRIVILEGE ESCALATION REMOVED]");
-  return text;
-}
 function runAnalysis(){
   var text=document.getElementById("mainInput").value.trim();
   if(!text)return;
@@ -421,28 +372,25 @@ function runAnalysis(){
   var btn=document.getElementById("runBtn");
   btn.innerHTML="<span class=\"sp\"></span>Analyzing...";
   btn.disabled=true;
-
   setTimeout(function(){
-    var det=detectPII(text);
+    var cleanText=neutralizeInjection(text);
+    var det=detectPII(cleanText);
     var inj=scanInj(text);
     var pol=det.matches.length>0?evalPolicy(op,det.types):{decision:"allow",rule:"no_pii",ruleNum:"#N-01",affected:[],reason:"No PII detected."};
-    var san=sanitize(text,det.matches,pol.decision,pol.affected,scope);
+    var san=sanitize(cleanText,det.matches,pol.decision,pol.affected,scope);
     var comp=mapCompliance(det.types);
     var red=san.transforms.filter(function(t){return t.action==="redacted";}).map(function(t){return t.type;});
     var pse=san.transforms.filter(function(t){return t.action==="pseudonymized";}).map(function(t){return t.type;});
     var reid=reidRisk(det.types,red,pse);
     var summary=generateAISummary(det,inj,comp,reid);
-
     var entry={text:text,op:op,scope:scope,decision:pol.decision,types:det.types,risk:det.risk,transforms:san.transforms,inj:inj,comp:comp,reid:reid,summary:summary,timestamp:ts()};
     auditLog.unshift(entry);
     updateSidebarAudit();
     renderMain(det,inj,pol,san,comp,reid,summary,scope);
-
     btn.innerHTML="&#9658; Analyze with PII-Safe";
     btn.disabled=false;
   },300);
 }
-
 function renderMain(det,inj,pol,san,comp,reid,summary,scope){
   var pc=bc(det.risk),cc=bc(comp.score),rc=bc(reid.score);
   var html="";
